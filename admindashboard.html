@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RiteHaul Admin - Capacity Management</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            min-height: 100vh;
+            color: #333;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            color: #7f8c8d;
+        }
+
+        .admin-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .week-info {
+            background: linear-gradient(45deg, #dc143c, #000000);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .week-info h3 {
+            margin-bottom: 10px;
+        }
+
+        .capacity-form {
+            display: grid;
+            gap: 20px;
+        }
+
+        .day-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            border-left: 4px solid #dc143c;
+        }
+
+        .day-section h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .inputs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-group label {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #2c3e50;
+            font-size: 0.9em;
+        }
+
+        .input-group input {
+            padding: 12px;
+            border: 2px solid #e3f2fd;
+            border-radius: 8px;
+            font-size: 16px;
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #dc143c;
+            box-shadow: 0 0 0 3px rgba(220, 20, 60, 0.1);
+        }
+
+        .capacity-display {
+            background: #e8f5e8;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-weight: 600;
+            color: #27ae60;
+            text-align: center;
+        }
+
+        .available-display {
+            background: #fff3cd;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-weight: 600;
+            color: #856404;
+            text-align: center;
+            margin-top: 5px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #dc143c, #000000);
+            color: white;
+            box-shadow: 0 5px 15px rgba(220, 20, 60, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(220, 20, 60, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(45deg, #27ae60, #2ecc71);
+            color: white;
+            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3);
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(39, 174, 96, 0.4);
+        }
+
+        .btn-info {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .btn-info:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(52, 152, 219, 0.4);
+        }
+
+        .dashboard-link {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .dashboard-link h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        .link-display {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px dashed #dc143c;
+            font-family: monospace;
+            color: #dc143c;
+            font-weight: 600;
+            word-break: break-all;
+        }
+
+        .success-message {
+            background: linear-gradient(45deg, #27ae60, #2ecc71);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            text-align: center;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .success-message.show {
+            opacity: 1;
+        }
+
+        @media (max-width: 768px) {
+            .inputs-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 RiteHaul Admin Panel</h1>
+            <p>Update daily capacity and generate client dashboard links</p>
+        </div>
+
+        <div class="dashboard-link">
+            <h3>🔗 Client Dashboard Link</h3>
+            <div class="link-display" id="dashboardLink">
+                https://damianmartinez.github.io/clientdashboard.html
+            </div>
+            <p style="margin-top: 10px; color: #7f8c8d; font-size: 0.9em;">
+                Share this link with clients to view current capacity
+            </p>
+        </div>
+
+        <div class="admin-panel">
+            <div class="week-info">
+                <h3>Week of <span id="currentWeek">Loading...</span></h3>
+                <p>Update booked loads for each day below</p>
+            </div>
+
+            <form class="capacity-form" id="capacityForm">
+                <!-- Monday -->
+                <div class="day-section">
+                    <h4>📅 Monday</h4>
+                    <div class="inputs-grid">
+                        <div class="input-group">
+                            <label>Local Runs Booked</label>
+                            <input type="number" id="mon_local" min="0" max="34" value="28">
+                            <div class="capacity-display">Capacity: 34</div>
+                            <div class="available-display" id="mon_local_avail">Available: 6</div>
+                        </div>
+                        <div class="input-group">
+                            <label>OTR Loads Booked</label>
+                            <input type="number" id="mon_otr" min="0" max="17" value="14">
+                            <div class="capacity-display">Capacity: 17</div>
+                            <div class="available-display" id="mon_otr_avail">Available: 3</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tuesday -->
+                <div class="day-section">
+                    <h4>📅 Tuesday</h4>
+                    <div class="inputs-grid">
+                        <div class="input-group">
+                            <label>Local Runs Booked</label>
+                            <input type="number" id="tue_local" min="0" max="34" value="31">
+                            <div class="capacity-display">Capacity: 34</div>
+                            <div class="available-display" id="tue_local_avail">Available: 3</div>
+                        </div>
+                        <div class="input-group">
+                            <label>OTR Loads Booked</label>
+                            <input type="number" id="tue_otr" min="0" max="17" value="15">
+                            <div class="capacity-display">Capacity: 17</div>
+                            <div class="available-display" id="tue_otr_avail">Available: 2</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wednesday -->
+                <div class="day-section">
+                    <h4>📅 Wednesday</h4>
+                    <div class="inputs-grid">
+                        <div class="input-group">
+                            <label>Local Runs Booked</label>
+                            <input type="number" id="wed_local" min="0" max="34" value="29">
+                            <div class="capacity-display">Capacity: 34</div>
+                            <div class="available-display" id="wed_local_avail">Available: 5</div>
+                        </div>
+                        <div class="input-group">
+                            <label>OTR Loads Booked</label>
+                            <input type="number" id="wed_otr" min="0" max="17" value="16">
+                            <div class="capacity-display">Capacity: 17</div>
+                            <div class="available-display" id="wed_otr_avail">Available: 1</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Thursday -->
+                <div class="day-section">
+                    <h4>📅 Thursday</h4>
+                    <div class="inputs-grid">
+                        <div class="input-group">
+                            <label>Local Runs Booked</label>
+                            <input type="number" id="thu_local" min="0" max="34" value="25">
+                            <div class="capacity-display">Capacity: 34</div>
+                            <div class="available-display" id="thu_local_avail">Available: 9</div>
+                        </div>
+                        <div class="input-group">
+                            <label>OTR Loads Booked</label>
+                            <input type="number" id="thu_otr" min="0" max="17" value="12">
+                            <div class="capacity-display">Capacity: 17</div>
+                            <div class="available-display" id="thu_otr_avail">Available: 5</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Friday -->
+                <div class="day-section">
+                    <h4>📅 Friday</h4>
+                    <div class="inputs-grid">
+                        <div class="input-group">
+                            <label>Local Runs Booked</label>
+                            <input type="number" id="fri_local" min="0" max="34" value="22">
+                            <div class="capacity-display">Capacity: 34</div>
+                            <div class="available-display" id="fri_local_avail">Available: 12</div>
+                        </div>
+                        <div class="input-group">
+                            <label>OTR Loads Booked</label>
+                            <input type="number" id="fri_otr" min="0" max="17" value="11">
+                            <div class="capacity-display">Capacity: 17</div>
+                            <div class="available-display" id="fri_otr_avail">Available: 6</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button type="button" class="btn btn-primary" onclick="updateCapacity()">
+                        💾 Update Dashboard
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="generateDashboard()">
+                        🚀 Generate Dashboard
+                    </button>
+                    <button type="button" class="btn btn-info" onclick="previewChanges()">
+                        👀 Preview Changes
+                    </button>
+                </div>
+
+                <div class="success-message" id="successMessage">
+                    ✅ Dashboard updated successfully! Your clients will see the new capacity numbers.
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Set current week display
+        function setCurrentWeek() {
+            const today = new Date();
+            const monday = new Date(today.setDate(today.getDate() - today.getDay() + 1));
+            const friday = new Date(monday);
+            friday.setDate(monday.getDate() + 4);
+            
+            const options = { month: 'long', day: 'numeric', year: 'numeric' };
+            const weekText = `${monday.toLocaleDateString('en-US', options)} - ${friday.toLocaleDateString('en-US', options)}`;
+            document.getElementById('currentWeek').textContent = weekText;
+        }
+
+        // Update available capacity displays when inputs change
+        function updateAvailableDisplays() {
+            const days = ['mon', 'tue', 'wed', 'thu', 'fri'];
+            
+            days.forEach(day => {
+                const localInput = document.getElementById(`${day}_local`);
+                const otrInput = document.getElementById(`${day}_otr`);
+                
+                const localAvail = 34 - parseInt(localInput.value || 0);
+                const otrAvail = 17 - parseInt(otrInput.value || 0);
+                
+                document.getElementById(`${day}_local_avail`).textContent = `Available: ${localAvail}`;
+                document.getElementById(`${day}_otr_avail`).textContent = `Available: ${otrAvail}`;
+                
+                // Color coding based on availability
+                const localAvailEl = document.getElementById(`${day}_local_avail`);
+                const otrAvailEl = document.getElementById(`${day}_otr_avail`);
+                
+                localAvailEl.style.backgroundColor = localAvail <= 5 ? '#f8d7da' : localAvail <= 10 ? '#fff3cd' : '#e8f5e8';
+                otrAvailEl.style.backgroundColor = otrAvail <= 2 ? '#f8d7da' : otrAvail <= 5 ? '#fff3cd' : '#e8f5e8';
+            });
+        }
+
+        // Add event listeners to all inputs
+        function addInputListeners() {
+            const inputs = document.querySelectorAll('input[type="number"]');
+            inputs.forEach(input => {
+                input.addEventListener('input', updateAvailableDisplays);
+            });
+        }
+
+        // Update capacity (simulate sending to server)
+        function updateCapacity() {
+            const formData = collectFormData();
+            
+            // Store data in localStorage for client dashboard to read
+            localStorage.setItem('ritehaul_capacity_data', JSON.stringify(formData));
+            localStorage.setItem('ritehaul_last_updated', new Date().toISOString());
+            
+            // In a real implementation, this would send data to your server
+            console.log('Updating capacity with:', formData);
+            
+            // Simulate success
+            showSuccessMessage();
+            
+            // Update the dashboard link timestamp to show it's been updated
+            updateDashboardTimestamp();
+            
+            // Notify client dashboard to refresh (if open in another tab)
+            window.dispatchEvent(new CustomEvent('capacityUpdated', { detail: formData }));
+        }
+
+        // Collect all form data
+        function collectFormData() {
+            const days = ['mon', 'tue', 'wed', 'thu', 'fri'];
+            const data = {};
+            
+            days.forEach(day => {
+                data[day] = {
+                    local: parseInt(document.getElementById(`${day}_local`).value || 0),
+                    otr: parseInt(document.getElementById(`${day}_otr`).value || 0)
+                };
+            });
+            
+            return data;
+        }
+
+        // Generate complete dashboard HTML with current data
+        function generateDashboard() {
+            const formData = collectFormData();
+            
+            // Create the complete dashboard HTML with the current data
+            const dashboardHTML = createDashboardHTML(formData);
+            
+            // In a real implementation, you would save this to a file or database
+            // For now, we'll open it in a new window to demonstrate
+            const newWindow = window.open('', '_blank');
+            newWindow.document.write(dashboardHTML);
+            newWindow.document.close();
+            
+            showSuccessMessage("Dashboard generated! Save the HTML to your web server.");
+        }
+
+        // Preview changes before updating
+        function previewChanges() {
+            const formData = collectFormData();
+            
+            let totalCapacity = 0;
+            let totalBooked = 0;
+            let preview = "📊 CAPACITY PREVIEW:\\n\\n";
+            
+            const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+            const dayKeys = ['mon', 'tue', 'wed', 'thu', 'fri'];
+            
+            dayKeys.forEach((key, index) => {
+                const dayData = formData[key];
+                const localAvail = 34 - dayData.local;
+                const otrAvail = 17 - dayData.otr;
+                
+                totalCapacity += 51; // 34 + 17
+                totalBooked += dayData.local + dayData.otr;
+                
+                preview += `${dayNames[index]}:\\n`;
+                preview += `  Locals: ${dayData.local}/34 (${localAvail} available)\\n`;
+                preview += `  OTRs: ${dayData.otr}/17 (${otrAvail} available)\\n\\n`;
+            });
+            
+            const utilization = Math.round((totalBooked / totalCapacity) * 100);
+            preview += `WEEKLY TOTALS:\\n`;
+            preview += `Total Capacity: ${totalCapacity}\\n`;
+            preview += `Total Booked: ${totalBooked}\\n`;
+            preview += `Available: ${totalCapacity - totalBooked}\\n`;
+            preview += `Utilization: ${utilization}%`;
+            
+            alert(preview);
+        }
+
+        // Show success message
+        function showSuccessMessage(customMessage = null) {
+            const messageEl = document.getElementById('successMessage');
+            if (customMessage) {
+                messageEl.textContent = customMessage;
+            }
+            messageEl.classList.add('show');
+            
+            setTimeout(() => {
+                messageEl.classList.remove('show');
+            }, 3000);
+        }
+
+        // Update dashboard link with timestamp
+        function updateDashboardTimestamp() {
+            const now = new Date();
+            const timestamp = now.toLocaleString();
+            const linkEl = document.getElementById('dashboardLink');
+            linkEl.innerHTML = `https://damianmartinez.github.io/clientdashboard.html<br><small style="color: #7f8c8d;">Last updated: ${timestamp}</small>`;
+        }
+
+        // Create complete dashboard HTML (simplified version)
+        function createDashboardHTML(formData) {
+            // This would generate the complete dashboard HTML with the current data
+            // For brevity, returning a placeholder
+            return `<!DOCTYPE html>
+<html>
+<head><title>RiteHaul Capacity Dashboard</title></head>
+<body>
+    <h1>RiteHaul Logistics - Capacity Dashboard</h1>
+    <p>Generated with current booking data</p>
+    <!-- Complete dashboard would be inserted here -->
+</body>
+</html>`;
+        }
+
+        // Initialize the admin panel
+        window.addEventListener('load', () => {
+            setCurrentWeek();
+            addInputListeners();
+            updateAvailableDisplays();
+        });
+    </script>
+</body>
+</html>

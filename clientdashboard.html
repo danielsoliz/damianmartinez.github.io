@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drayage Capacity Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #dc143c 0%, #8b0000 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.1em;
+        }
+
+        .controls {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .week-selector {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .week-selector label {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .week-selector input {
+            padding: 10px 15px;
+            border: 2px solid #e3f2fd;
+            border-radius: 10px;
+            font-size: 14px;
+            background: #fff;
+            transition: all 0.3s ease;
+        }
+
+        .week-selector input:focus {
+            outline: none;
+            border-color: #dc143c;
+            box-shadow: 0 0 0 3px rgba(220, 20, 60, 0.1);
+        }
+
+        .refresh-btn {
+            background: linear-gradient(45deg, #dc143c, #000000);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(220, 20, 60, 0.3);
+        }
+
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(220, 20, 60, 0.4);
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .summary-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .summary-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(45deg, #dc143c, #000000);
+        }
+
+        .summary-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .summary-card h3 {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        .summary-card .value {
+            font-size: 2.5em;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .summary-card .unit {
+            color: #95a5a6;
+            font-size: 0.9em;
+        }
+
+        .capacity-table {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+        }
+
+        .capacity-table h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: center;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        th {
+            background: linear-gradient(45deg, #dc143c, #000000);
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 0.5px;
+        }
+
+        th:first-child {
+            text-align: left;
+        }
+
+        td:first-child {
+            text-align: left;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        tbody tr {
+            transition: background-color 0.3s ease;
+        }
+
+        tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .capacity-number {
+            font-size: 1.2em;
+            font-weight: 700;
+            color: #27ae60;
+        }
+
+        .capacity-booked {
+            font-size: 0.9em;
+            color: #e74c3c;
+            font-weight: 600;
+        }
+
+        .capacity-available {
+            font-size: 0.9em;
+            color: #f39c12;
+            font-weight: 600;
+        }
+
+        .charts-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .chart-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-container h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            font-weight: 600;
+        }
+
+        .chart-canvas {
+            position: relative;
+            height: 300px;
+        }
+
+        .notes-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .notes-section h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            font-weight: 600;
+        }
+
+        .notes-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .notes-list li {
+            background: #f8f9fa;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #dc143c;
+            font-size: 0.95em;
+            color: #2c3e50;
+        }
+
+        .last-updated {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.8);
+            font-style: italic;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .summary-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 15px;">
+                <div style="background: linear-gradient(45deg, #dc143c, #000000); color: white; padding: 15px 25px; border-radius: 10px; font-weight: bold; font-size: 1.5em; letter-spacing: 2px;">
+                    RHL
+                </div>
+                <div>
+                    <h1 style="margin: 0; font-size: 2.2em;">RiteHaul Logistics</h1>
+                    <p style="margin: 0; color: #7f8c8d; font-size: 0.9em;">DOT: 3731797 | MC: 1317606 | Miami, FL</p>
+                </div>
+            </div>
+            <h2 style="color: #2c3e50; margin-bottom: 5px;">🚛 Drayage Capacity Dashboard</h2>
+            <p>Weekly capacity planning for local runs and OTR loads</p>
+        </div>
+
+        <div class="controls">
+            <div class="week-selector">
+                <label for="weekStart">Week Starting:</label>
+                <input type="date" id="weekStart">
+                <span id="weekRange" style="color: #7f8c8d; margin-left: 10px;"></span>
+            </div>
+            <button class="refresh-btn" onclick="refreshCapacity()">🔄 Update Capacity</button>
+        </div>
+
+        <div class="summary-cards">
+            <div class="summary-card">
+                <h3>Total Weekly Capacity</h3>
+                <div class="value" id="totalCapacity">240</div>
+                <div class="unit">runs</div>
+            </div>
+            <div class="summary-card">
+                <h3>Currently Booked</h3>
+                <div class="value" id="totalBooked">187</div>
+                <div class="unit">runs</div>
+            </div>
+            <div class="summary-card">
+                <h3>Available Capacity</h3>
+                <div class="value" id="totalAvailable">53</div>
+                <div class="unit">runs</div>
+            </div>
+            <div class="summary-card">
+                <h3>Utilization Rate</h3>
+                <div class="value" id="utilizationRate">78</div>
+                <div class="unit">%</div>
+            </div>
+        </div>
+
+        <div class="capacity-table">
+            <h3>📅 Daily Capacity Breakdown</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Day</th>
+                        <th>Local Runs<br><small>Capacity</small></th>
+                        <th>Local Runs<br><small>Booked</small></th>
+                        <th>Local Runs<br><small>Available</small></th>
+                        <th>OTR Loads<br><small>Capacity</small></th>
+                        <th>OTR Loads<br><small>Booked</small></th>
+                        <th>OTR Loads<br><small>Available</small></th>
+                        <th>Total Daily<br><small>Capacity</small></th>
+                    </tr>
+                </thead>
+                <tbody id="capacityTableBody">
+                    <!-- Data will be populated by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="charts-section">
+            <div class="chart-container">
+                <h3>📊 Daily Capacity vs Booked</h3>
+                <div class="chart-canvas">
+                    <canvas id="capacityChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-container">
+                <h3>📈 Utilization Rate by Day</h3>
+                <div class="chart-canvas">
+                    <canvas id="utilizationChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="notes-section">
+            <h3>📝 Capacity Notes & Constraints</h3>
+            <ul class="notes-list" id="capacityNotes">
+                <li>Driver availability: 24 drivers scheduled this week</li>
+                <li>Equipment status: 28 tractors, 45 chassis available</li>
+                <li>Port congestion expected Tuesday-Wednesday, may impact local runs</li>
+                <li>OTR loads limited by driver hours of service regulations</li>
+                <li>Weekend capacity available for urgent shipments (contact dispatch)</li>
+            </ul>
+        </div>
+
+        <div class="last-updated" id="lastUpdated">
+            Last updated: Loading...
+        </div>
+    </div>
+
+    <script>
+        // RiteHaul Logistics capacity data - 34 locals and 17 OTRs per day maximum
+        let capacityData = {
+            days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+            dailyData: [
+                {
+                    day: 'Monday',
+                    localCapacity: 34,
+                    localBooked: 28,
+                    otrCapacity: 17,
+                    otrBooked: 14
+                },
+                {
+                    day: 'Tuesday',
+                    localCapacity: 34,
+                    localBooked: 31,
+                    otrCapacity: 17,
+                    otrBooked: 15
+                },
+                {
+                    day: 'Wednesday',
+                    localCapacity: 34,
+                    localBooked: 29,
+                    otrCapacity: 17,
+                    otrBooked: 16
+                },
+                {
+                    day: 'Thursday',
+                    localCapacity: 34,
+                    localBooked: 25,
+                    otrCapacity: 17,
+                    otrBooked: 12
+                },
+                {
+                    day: 'Friday',
+                    localCapacity: 34,
+                    localBooked: 22,
+                    otrCapacity: 17,
+                    otrBooked: 11
+                }
+            ]
+        };
+
+        // Load data from localStorage (updated by admin panel)
+        function loadCapacityData() {
+            const storedData = localStorage.getItem('ritehaul_capacity_data');
+            const lastUpdated = localStorage.getItem('ritehaul_last_updated');
+            
+            if (storedData) {
+                try {
+                    const adminData = JSON.parse(storedData);
+                    const dayKeys = ['mon', 'tue', 'wed', 'thu', 'fri'];
+                    
+                    // Update capacityData with admin panel data
+                    capacityData.dailyData.forEach((day, index) => {
+                        const dayKey = dayKeys[index];
+                        if (adminData[dayKey]) {
+                            day.localBooked = adminData[dayKey].local || day.localBooked;
+                            day.otrBooked = adminData[dayKey].otr || day.otrBooked;
+                        }
+                    });
+                    
+                    // Update last updated timestamp
+                    if (lastUpdated) {
+                        const updateDate = new Date(lastUpdated);
+                        document.getElementById('lastUpdated').textContent = 
+                            `Last updated: ${updateDate.toLocaleString()}`;
+                    }
+                } catch (e) {
+                    console.log('Error loading admin data:', e);
+                }
+            }
+        }
+
+        function initDashboard() {
+            loadCapacityData(); // Load data from admin panel
+            setCurrentWeek();
+            updateSummaryCards();
+            populateCapacityTable();
+            createCapacityChart();
+            createUtilizationChart();
+            updateTimestamp();
+        }
+
+        function setCurrentWeek() {
+            const today = new Date();
+            const monday = new Date(today.setDate(today.getDate() - today.getDay() + 1));
+            const friday = new Date(monday);
+            friday.setDate(monday.getDate() + 4);
+            
+            document.getElementById('weekStart').valueAsDate = monday;
+            
+            const options = { month: 'short', day: 'numeric' };
+            const weekRangeText = `${monday.toLocaleDateString('en-US', options)} - ${friday.toLocaleDateString('en-US', options)}`;
+            document.getElementById('weekRange').textContent = weekRangeText;
+        }
+
+        function updateSummaryCards() {
+            let totalCapacity = 0;
+            let totalBooked = 0;
+            
+            capacityData.dailyData.forEach(day => {
+                totalCapacity += day.localCapacity + day.otrCapacity;
+                totalBooked += day.localBooked + day.otrBooked;
+            });
+            
+            const totalAvailable = totalCapacity - totalBooked;
+            const utilizationRate = Math.round((totalBooked / totalCapacity) * 100);
+            
+            document.getElementById('totalCapacity').textContent = totalCapacity;
+            document.getElementById('totalBooked').textContent = totalBooked;
+            document.getElementById('totalAvailable').textContent = totalAvailable;
+            document.getElementById('utilizationRate').textContent = utilizationRate;
+        }
+
+        function populateCapacityTable() {
+            const tbody = document.getElementById('capacityTableBody');
+            tbody.innerHTML = '';
+            
+            capacityData.dailyData.forEach(day => {
+                const localAvailable = day.localCapacity - day.localBooked;
+                const otrAvailable = day.otrCapacity - day.otrBooked;
+                const totalDayCapacity = day.localCapacity + day.otrCapacity;
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${day.day}</strong></td>
+                    <td><span class="capacity-number">${day.localCapacity}</span></td>
+                    <td><span class="capacity-booked">${day.localBooked}</span></td>
+                    <td><span class="capacity-available">${localAvailable}</span></td>
+                    <td><span class="capacity-number">${day.otrCapacity}</span></td>
+                    <td><span class="capacity-booked">${day.otrBooked}</span></td>
+                    <td><span class="capacity-available">${otrAvailable}</span></td>
+                    <td><span class="capacity-number">${totalDayCapacity}</span></td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        function createCapacityChart() {
+            const ctx = document.getElementById('capacityChart').getContext('2d');
+            
+            const localCapacityData = capacityData.dailyData.map(d => d.localCapacity);
+            const localBookedData = capacityData.dailyData.map(d => d.localBooked);
+            const otrCapacityData = capacityData.dailyData.map(d => d.otrCapacity);
+            const otrBookedData = capacityData.dailyData.map(d => d.otrBooked);
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: capacityData.days,
+                    datasets: [
+                        {
+                            label: 'Local Runs Capacity',
+                            data: localCapacityData,
+                            backgroundColor: 'rgba(220, 20, 60, 0.8)',
+                            borderColor: 'rgb(220, 20, 60)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Local Runs Booked',
+                            data: localBookedData,
+                            backgroundColor: 'rgba(139, 0, 0, 0.8)',
+                            borderColor: 'rgb(139, 0, 0)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'OTR Capacity',
+                            data: otrCapacityData,
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            borderColor: 'rgb(0, 0, 0)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'OTR Booked',
+                            data: otrBookedData,
+                            backgroundColor: 'rgba(220, 20, 60, 0.6)',
+                            borderColor: 'rgb(220, 20, 60)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Number of Runs/Loads'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createUtilizationChart() {
+            const ctx = document.getElementById('utilizationChart').getContext('2d');
+            
+            const utilizationData = capacityData.dailyData.map(day => {
+                const totalCapacity = day.localCapacity + day.otrCapacity;
+                const totalBooked = day.localBooked + day.otrBooked;
+                return Math.round((totalBooked / totalCapacity) * 100);
+            });
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: capacityData.days,
+                    datasets: [{
+                        label: 'Utilization %',
+                        data: utilizationData,
+                        borderColor: 'rgb(220, 20, 60)',
+                        backgroundColor: 'rgba(220, 20, 60, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: 'rgb(220, 20, 60)',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 3,
+                        pointRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Utilization Rate (%)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function refreshCapacity() {
+            // Load latest data from admin panel
+            loadCapacityData();
+            
+            // Update all displays
+            updateSummaryCards();
+            populateCapacityTable();
+            createCapacityChart();
+            createUtilizationChart();
+            updateTimestamp();
+            
+            // Show feedback
+            const btn = document.querySelector('.refresh-btn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '✓ Updated!';
+            btn.style.background = 'linear-gradient(45deg, #27ae60, #2ecc71)';
+            
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.style.background = 'linear-gradient(45deg, #dc143c, #000000)';
+            }, 2000);
+        }
+
+        function updateTimestamp() {
+            const now = new Date();
+            const options = { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric', 
+                hour: '2-digit', 
+                minute: '2-digit',
+                second: '2-digit'
+            };
+            document.getElementById('lastUpdated').textContent = 
+                `Last updated: ${now.toLocaleDateString('en-US', options)}`;
+        }
+
+        // Auto-refresh every 30 seconds to check for admin updates
+        function scheduleAutoRefresh() {
+            setInterval(() => {
+                const storedData = localStorage.getItem('ritehaul_capacity_data');
+                const lastUpdated = localStorage.getItem('ritehaul_last_updated');
+                
+                if (storedData && lastUpdated) {
+                    const updateDate = new Date(lastUpdated);
+                    const currentLastUpdated = document.getElementById('lastUpdated').textContent;
+                    
+                    // Check if data has been updated since last refresh
+                    if (!currentLastUpdated.includes(updateDate.toLocaleString())) {
+                        refreshCapacity();
+                    }
+                }
+            }, 30000); // Check every 30 seconds
+        }
+
+        // Update week range when date changes
+        document.getElementById('weekStart').addEventListener('change', function() {
+            const selectedDate = new Date(this.value);
+            const friday = new Date(selectedDate);
+            friday.setDate(selectedDate.getDate() + 4);
+            
+            const options = { month: 'short', day: 'numeric' };
+            const weekRangeText = `${selectedDate.toLocaleDateString('en-US', options)} - ${friday.toLocaleDateString('en-US', options)}`;
+            document.getElementById('weekRange').textContent = weekRangeText;
+        });
+
+        // Listen for admin panel updates
+        window.addEventListener('capacityUpdated', (event) => {
+            console.log('Received capacity update from admin panel');
+            refreshCapacity();
+        });
+
+        // Initialize dashboard when page loads
+        window.addEventListener('load', () => {
+            initDashboard();
+            scheduleAutoRefresh();
+        });
+    </script>
+</body>
+</html>
